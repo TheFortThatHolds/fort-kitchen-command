@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fort Kitchen Command - Decision-Free Meal Management</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #ffffff;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.8;
+            margin-bottom: 20px;
+        }
+        
+        .main-nav {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+        
+        .nav-button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .nav-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+        
+        .nav-button.active {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+        }
+        
+        .section {
+            display: none;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        
+        .section.active {
+            display: block;
+        }
+        
+        .section h2 {
+            color: #4ecdc4;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+        
+        .pantry-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .pantry-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px dashed rgba(78, 205, 196, 0.3);
+            text-align: center;
+            transition: border-color 0.3s;
+        }
+        
+        .pantry-item:hover {
+            border-color: rgba(78, 205, 196, 0.8);
+        }
+        
+        .photo-upload {
+            width: 100%;
+            height: 150px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px dashed #4ecdc4;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: background-color 0.3s;
+        }
+        
+        .photo-upload:hover {
+            background: rgba(78, 205, 196, 0.1);
+        }
+        
+        .photo-upload input[type="file"] {
+            display: none;
+        }
+        
+        .recipe-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+            border-left: 4px solid #4ecdc4;
+        }
+        
+        .recipe-card h3 {
+            color: #ff6b6b;
+            margin-bottom: 10px;
+        }
+        
+        .recipe-status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .recipe-status.chris-approved {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            color: white;
+        }
+        
+        .recipe-status.pending {
+            background: linear-gradient(45deg, #ffa726, #ff7043);
+            color: white;
+        }
+        
+        .meal-suggestion {
+            background: linear-gradient(45deg, rgba(255, 107, 107, 0.2), rgba(78, 205, 196, 0.2));
+            padding: 20px;
+            border-radius: 15px;
+            margin: 15px 0;
+            border: 1px solid rgba(78, 205, 196, 0.3);
+        }
+        
+        .meal-options {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .meal-option {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .meal-option:hover {
+            border-color: #4ecdc4;
+            transform: translateY(-2px);
+        }
+        
+        .grocery-list {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+        
+        .store-section {
+            margin-bottom: 25px;
+            padding: 15px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .store-section h4 {
+            color: #ff6b6b;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+        
+        .grocery-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .grocery-item:last-child {
+            border-bottom: none;
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(78, 205, 196, 0.4);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+        }
+        
+        .btn-secondary:hover {
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 2px solid rgba(78, 205, 196, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1em;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: #4ecdc4;
+        }
+        
+        .current-inventory {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .inventory-item {
+            background: rgba(78, 205, 196, 0.2);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.9em;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .meal-options {
+                flex-direction: column;
+            }
+            
+            .meal-option {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏰 Fort Kitchen Command</h1>
+            <p>Decision-Free WFPBNO + GF Meal Management for Jimmy & Chris</p>
+            <p style="font-size: 0.9em; opacity: 0.8;">Channeling Saul Ember's Sacred Desert Kitchen Wisdom</p>
+            <div class="main-nav">
+                <button class="nav-button active" onclick="showSection('pantry')">📸 Pantry Tracker</button>
+                <button class="nav-button" onclick="showSection('recipes')">📝 Recipe Database</button>
+                <button class="nav-button" onclick="showSection('meals')">🍽️ Tonight's Meals</button>
+                <button class="nav-button" onclick="showSection('shopping')">🛒 Shopping Lists</button>
+            </div>
+        </div>
+
+        <!-- Pantry Tracker Section -->
+        <div id="pantry" class="section active">
+            <h2>📸 Pantry Inventory</h2>
+            <p>Snap photos to automatically update your pantry inventory</p>
+            
+            <div class="photo-upload" onclick="document.getElementById('pantry-photo').click()">
+                <input type="file" id="pantry-photo" accept="image/*" multiple onchange="uploadPantryPhotos(event)">
+                <div>
+                    <div style="font-size: 3em; margin-bottom: 10px;">📸</div>
+                    <div>Click to upload pantry photos</div>
+                    <div style="font-size: 0.9em; opacity: 0.7;">AI will identify ingredients automatically</div>
+                </div>
+            </div>
+
+            <h3>Current Inventory</h3>
+            <div class="current-inventory" id="current-inventory">
+                <!-- Inventory items will be populated here -->
+                <div class="inventory-item">GF Pasta</div>
+                <div class="inventory-item">Tomato Sauce (No Oil)</div>
+                <div class="inventory-item">Tempeh</div>
+                <div class="inventory-item">Nutritional Yeast</div>
+                <div class="inventory-item">Onions</div>
+                <div class="inventory-item">Garlic</div>
+                <div class="inventory-item">Bell Peppers</div>
+                <div class="inventory-item">Quinoa</div>
+                <div class="inventory-item">Black Beans</div>
+                <div class="inventory-item">Spinach</div>
+                <div class="inventory-item">Cashews</div>
+                <div class="inventory-item">Cumin</div>
+                <div class="inventory-item">Sweet Potatoes</div>
+                <div class="inventory-item">Tahini</div>
+            </div>
+
+            <button class="btn" onclick="manualAddInventory()">+ Add Item Manually</button>
+        </div>
+
+        <!-- Recipe Database Section -->
+        <div id="recipes" class="section">
+            <h2>📝 Recipe Database</h2>
+            <p>16-20 rotating Chris-approved recipes for decision-free cooking</p>
+            
+            <div class="recipe-card">
+                <h3>Desert Oracle Gut-Activating Recovery Chili</h3>
+                <div class="recipe-status chris-approved">✅ Chris Approved (Uncle Pat's WFPBNO Adaptation)</div>
+                <p><strong>Ingredients:</strong> Black beans, kidney beans, sweet potatoes, bell peppers, onions, garlic, tomato sauce (no oil), cumin, smoked paprika, cocoa powder</p>
+                <p><strong>Prep Time:</strong> 35 minutes</p>
+                <p><strong>Notes:</strong> Saul's healing ritual - water-sauté technique, survived smoking session</p>
+            </div>
+
+            <div class="recipe-card">
+                <h3>Sacred Tempeh & Quinoa Bowl</h3>
+                <div class="recipe-status chris-approved">✅ Chris Approved</div>
+                <p><strong>Ingredients:</strong> Quinoa, tempeh, spinach, bell peppers, nutritional yeast, tahini dressing, steamed vegetables</p>
+                <p><strong>Prep Time:</strong> 25 minutes</p>
+                <p><strong>Notes:</strong> WFPBNO power bowl, cast-iron blessed</p>
+            </div>
+
+            <div class="recipe-card">
+                <h3>High Desert Hummus & GF Crackers</h3>
+                <div class="recipe-status chris-approved">✅ Chris Approved</div>
+                <p><strong>Ingredients:</strong> Chickpeas, tahini, lemon juice, garlic, cumin, GF crackers, vegetables for dipping</p>
+                <p><strong>Prep Time:</strong> 15 minutes</p>
+                <p><strong>Notes:</strong> Saul's molcajete-blessed version, perfect for lazy afternoons</p>
+            </div>
+
+            <div class="recipe-card">
+                <h3>Saguaro Sunrise Buddha Bowl</h3>
+                <div class="recipe-status chris-approved">✅ Chris Approved</div>
+                <p><strong>Ingredients:</strong> Roasted sweet potatoes, quinoa, steamed broccoli, chickpeas, avocado, tahini-lemon dressing</p>
+                <p><strong>Prep Time:</strong> 30 minutes</p>
+                <p><strong>Notes:</strong> One-bowl wonder, minimal cleanup required</p>
+            </div>
+
+            <div class="recipe-card">
+                <h3>Stoned Lentil & Veggie Curry</h3>
+                <div class="recipe-status chris-approved">✅ Chris Approved</div>
+                <p><strong>Ingredients:</strong> Red lentils, coconut milk, curry powder, turmeric, ginger, mixed vegetables, GF naan</p>
+                <p><strong>Prep Time:</strong> 25 minutes</p>
+                <p><strong>Notes:</strong> Simmer while stoned, tastes like desert wisdom</p>
+            </div>
+
+            <div class="recipe-card">
+                <h3>Healing Mushroom & Barley Soup</h3>
+                <div class="recipe-status chris-approved">✅ Chris Approved</div>
+                <p><strong>Ingredients:</strong> Mixed mushrooms, pearl barley, vegetable broth, carrots, celery, thyme, nutritional yeast</p>
+                <p><strong>Prep Time:</strong> 40 minutes</p>
+                <p><strong>Notes:</strong> Perfect for recovery days, freezes well</p>
+            </div>
+
+            <div class="recipe-card">
+                <h3>Lazy Sunday Veggie Pasta</h3>
+                <div class="recipe-status chris-approved">✅ Chris Approved</div>
+                <p><strong>Ingredients:</strong> GF pasta, marinara sauce (oil-free), zucchini, bell peppers, spinach, nutritional yeast</p>
+                <p><strong>Prep Time:</strong> 20 minutes</p>
+                <p><strong>Notes:</strong> Jimmy's go-to when he doesn't want to think</p>
+            </div>
+
+            <div class="recipe-card">
+                <h3>Desert Storm Tacos</h3>
+                <div class="recipe-status chris-approved">✅ Chris Approved</div>
+                <p><strong>Ingredients:</strong> GF corn tortillas, black beans, roasted sweet potatoes, avocado, salsa, lime, cilantro</p>
+                <p><strong>Prep Time:</strong> 20 minutes</p>
+                <p><strong>Notes:</strong> Assembly-line style, Chris can customize his own</p>
+            </div>
+
+            <button class="btn" onclick="addNewRecipe()">+ Add New Recipe</button>
+            <button class="btn btn-secondary" onclick="requestApproval()">Request Chris Approval</button>
+        </div>
+
+        <!-- Tonight's Meals Section -->
+        <div id="meals" class="section">
+            <h2>🍽️ What's for Dinner Tonight?</h2>
+            <p>Based on your current pantry and approved recipes</p>
+            
+            <div class="meal-suggestion">
+                <h3>🎯 Tonight's Options (No Decision Required!)</h3>
+                <div class="meal-options">
+                    <div class="meal-option" onclick="selectMeal('turkey-pasta')">
+                        <h4>Turkey & Vegetable Pasta</h4>
+                        <p>✅ All ingredients available</p>
+                        <p>⏱️ 25 minutes</p>
+                        <p>🔥 Comfort food</p>
+                    </div>
+                    <div class="meal-option" onclick="selectMeal('rice-bowl')">
+                        <h4>Black Bean Rice Bowl</h4>
+                        <p>✅ All ingredients available</p>
+                        <p>⏱️ 20 minutes</p>
+                        <p>🌱 Healthy option</p>
+                    </div>
+                    <div class="meal-option" onclick="selectMeal('leftover')">
+                        <h4>Creative Leftovers</h4>
+                        <p>🍲 Use what needs eating</p>
+                        <p>⏱️ 15 minutes</p>
+                        <p>♻️ Zero waste</p>
+                    </div>
+                </div>
+                <div id="selected-meal" style="margin-top: 20px; display: none;">
+                    <h4>Selected: <span id="meal-name"></span></h4>
+                    <div id="cooking-instructions"></div>
+                    <button class="btn" onclick="startCooking()">🔥 Start Cooking!</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shopping Lists Section -->
+        <div id="shopping" class="section">
+            <h2>🛒 Smart Shopping Lists</h2>
+            <p>Organized by store for maximum efficiency</p>
+            
+            <div class="grocery-list">
+                <h3>Next Week's Meal Rotation</h3>
+                <p>Based on your approved recipes and current inventory</p>
+                
+                <div class="store-section">
+                    <h4>🛒 Walmart Pickup</h4>
+                    <div class="grocery-item">
+                        <span>Ground Turkey (2 lbs)</span>
+                        <span>$8.99</span>
+                    </div>
+                    <div class="grocery-item">
+                        <span>Pasta (3 boxes)</span>
+                        <span>$4.50</span>
+                    </div>
+                    <div class="grocery-item">
+                        <span>Rice (5 lb bag)</span>
+                        <span>$3.99</span>
+                    </div>
+                    <div class="grocery-item">
+                        <span>Onions (3 lb bag)</span>
+                        <span>$2.49</span>
+                    </div>
+                </div>
+
+                <div class="store-section">
+                    <h4>🥬 Whole Foods</h4>
+                    <div class="grocery-item">
+                        <span>Organic Spinach (2 containers)</span>
+                        <span>$7.98</span>
+                    </div>
+                    <div class="grocery-item">
+                        <span>Bell Peppers (6 count)</span>
+                        <span>$8.50</span>
+                    </div>
+                    <div class="grocery-item">
+                        <span>Fresh Garlic</span>
+                        <span>$2.99</span>
+                    </div>
+                </div>
+
+                <div class="store-section">
+                    <h4>🌱 Sprouts</h4>
+                    <div class="grocery-item">
+                        <span>Black Beans (4 cans)</span>
+                        <span>$4.76</span>
+                    </div>
+                    <div class="grocery-item">
+                        <span>Tomato Sauce (6 cans)</span>
+                        <span>$6.99</span>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <strong>Total Estimated Cost: $51.19</strong>
+                    <p style="opacity: 0.8;">Covers 2 weeks of rotating meals</p>
+                </div>
+            </div>
+
+            <button class="btn" onclick="generateShoppingList()">🔄 Regenerate List</button>
+            <button class="btn btn-secondary" onclick="exportShoppingList()">📱 Export to Phone</button>
+        </div>
+    </div>
+
+    <script src="kitchen-command.js"></script>
+</body>
+</html>
