@@ -32,28 +32,6 @@ function showSection(sectionId) {
 }
 
 // Pantry Management Functions
-function uploadPantryPhotos(event) {
-    const files = event.target.files;
-    if (files.length > 0) {
-        // Simulate AI image recognition
-        showLoadingMessage('Analyzing pantry photos with AI...');
-        
-        setTimeout(() => {
-            // Simulate detected items
-            // Simulate detected items - in a real app this would use AI
-            const detectedItems = [
-                'Item 1', 'Item 2', 'Item 3'
-            ];
-            
-            // Update pantry inventory
-            pantryInventory = [...new Set([...pantryInventory, ...detectedItems])];
-            updateInventoryDisplay();
-            
-            hideLoadingMessage();
-            showSuccessMessage(`✅ Detected ${detectedItems.length} items in your pantry!`);
-        }, 2000);
-    }
-}
 
 function updateInventoryDisplay() {
     const inventoryContainer = document.getElementById('current-inventory');
@@ -83,12 +61,20 @@ function removeInventoryItem(item) {
 }
 
 function manualAddInventory() {
-    const item = prompt('Add item to pantry:');
-    if (item && item.trim()) {
-        pantryInventory.push(item.trim());
+    const items = prompt('Add items to pantry (one per line or comma-separated):');
+    if (items && items.trim()) {
+        // Clean and split the items
+        const itemList = items.split(/[,\n]+/)
+            .map(item => item.trim())
+            .filter(item => item.length > 0);
+        
+        // Add to pantry
+        pantryInventory.push(...itemList);
         updateInventoryDisplay();
         updateMealSuggestions();
-        showSuccessMessage(`Added "${item}" to pantry!`);
+        
+        const count = itemList.length;
+        showSuccessMessage(`Added ${count} item${count > 1 ? 's' : ''} to pantry!`);
     }
 }
 

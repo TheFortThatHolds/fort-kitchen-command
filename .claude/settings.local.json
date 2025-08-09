@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "WebFetch(domain:healthymidwesterngirl.com)"
+      "WebFetch(domain:healthymidwesterngirl.com)",
+      "Bash(mkdir:*)"
     ],
     "deny": []
   }
