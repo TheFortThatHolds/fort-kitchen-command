@@ -100,24 +100,37 @@ function cleanIngredients(ingredientsText) {
         .replace(/▢/g, '') // Remove checkbox symbols
         .replace(/US Customary.*?Metric/gi, '') // Remove measurement toggles
         .replace(/Ingredients/gi, '') // Remove "Ingredients" headers
-        .replace(/\s+/g, ' ') // Normalize whitespace
         .trim();
     
-    // Split by commas or common separators
-    let ingredients = cleaned.split(/[,\n]/);
+    // Try to detect pattern - ingredients mashed together with measurements
+    // Look for patterns like "1 cup something2 tbsp something else"
+    cleaned = cleaned.replace(/(\d+\s*(?:cup|cups|tsp|tbsp|tablespoon|teaspoon|oz|ounce|lb|pound|can|cloves?|small|medium|large)[\s\w\.\-,()]+?)(?=\d|$)/gi, '$1|');
+    
+    // Split by our inserted separator, commas, or newlines
+    let ingredients = cleaned.split(/[|,\n]+/);
     
     // Clean each ingredient
     ingredients = ingredients
         .map(ing => ing.trim())
         .filter(ing => {
-            // Filter out empty, single words, or numbers
+            // Keep ingredients that are meaningful
             return ing.length > 3 && 
                    !(/^\d+$/.test(ing)) && // Not just numbers
-                   ing.split(' ').length > 1; // More than one word
+                   !(/^(cup|cups|tsp|tbsp|oz|small|medium|large)$/i.test(ing)); // Not just measurements
         });
     
-    // Remove duplicates
-    return [...new Set(ingredients)];
+    // Remove exact duplicates
+    let uniqueIngredients = [];
+    let seen = new Set();
+    for (let ing of ingredients) {
+        let normalized = ing.toLowerCase().replace(/\s+/g, ' ');
+        if (!seen.has(normalized) && ing.trim()) {
+            seen.add(normalized);
+            uniqueIngredients.push(ing);
+        }
+    }
+    
+    return uniqueIngredients;
 }
 
 function addNewRecipe() {
@@ -595,30 +608,105 @@ function showRecipeDetails(recipeId) {
     document.body.appendChild(modal);
 }
 
-// Add function to edit recipe
+// Add function to edit recipe with proper textarea
 function editRecipe(recipeId) {
     const recipe = approvedRecipes.find(r => r.id === recipeId);
     if (!recipe) return;
     
-    const newName = prompt('Recipe name:', recipe.name);
-    if (newName) recipe.name = newName;
+    // Close the current modal first
+    document.querySelector('div[style*="z-index: 2000"]')?.remove();
+    document.querySelector('div[style*="z-index: 1999"]')?.remove();
     
-    const newIngredients = prompt('Ingredients (comma-separated):', recipe.ingredients.join(', '));
-    if (newIngredients) recipe.ingredients = newIngredients.split(',').map(i => i.trim());
+    // Create a proper edit modal with textareas
+    const editModal = document.createElement('div');
+    editModal.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+        border: 2px solid #4ecdc4;
+        border-radius: 20px;
+        padding: 30px;
+        max-width: 600px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        z-index: 3000;
+        color: white;
+    `;
     
-    const newPrepTime = prompt('Prep time (minutes):', recipe.prepTime);
-    if (newPrepTime) recipe.prepTime = parseInt(newPrepTime);
+    editModal.innerHTML = `
+        <h3 style="color: #4ecdc4; margin-bottom: 20px;">Edit Recipe</h3>
+        
+        <label style="display: block; margin-bottom: 5px;">Recipe Name:</label>
+        <input type="text" id="edit-name" value="${recipe.name}" style="width: 100%; padding: 8px; margin-bottom: 15px; background: rgba(255,255,255,0.1); border: 1px solid #4ecdc4; color: white; border-radius: 5px;">
+        
+        <label style="display: block; margin-bottom: 5px;">Ingredients (one per line):</label>
+        <textarea id="edit-ingredients" style="width: 100%; height: 150px; padding: 8px; margin-bottom: 15px; background: rgba(255,255,255,0.1); border: 1px solid #4ecdc4; color: white; border-radius: 5px; font-family: inherit;">${recipe.ingredients.join('\n')}</textarea>
+        
+        <label style="display: block; margin-bottom: 5px;">Instructions (one per line):</label>
+        <textarea id="edit-instructions" style="width: 100%; height: 150px; padding: 8px; margin-bottom: 15px; background: rgba(255,255,255,0.1); border: 1px solid #4ecdc4; color: white; border-radius: 5px; font-family: inherit;">${recipe.instructions ? recipe.instructions.join('\n') : ''}</textarea>
+        
+        <label style="display: block; margin-bottom: 5px;">Prep Time (minutes):</label>
+        <input type="number" id="edit-preptime" value="${recipe.prepTime}" style="width: 100%; padding: 8px; margin-bottom: 15px; background: rgba(255,255,255,0.1); border: 1px solid #4ecdc4; color: white; border-radius: 5px;">
+        
+        <label style="display: block; margin-bottom: 5px;">Notes:</label>
+        <textarea id="edit-notes" style="width: 100%; height: 60px; padding: 8px; margin-bottom: 20px; background: rgba(255,255,255,0.1); border: 1px solid #4ecdc4; color: white; border-radius: 5px; font-family: inherit;">${recipe.notes || ''}</textarea>
+        
+        <div style="display: flex; gap: 10px;">
+            <button onclick="saveRecipeEdits('${recipeId}')" class="btn">Save Changes</button>
+            <button onclick="this.closest('div[style*=\\"z-index: 3000\\"]').remove(); document.getElementById('edit-backdrop').remove();" class="btn btn-secondary">Cancel</button>
+        </div>
+    `;
     
-    const newNotes = prompt('Notes:', recipe.notes || '');
-    recipe.notes = newNotes;
+    // Add backdrop
+    const backdrop = document.createElement('div');
+    backdrop.id = 'edit-backdrop';
+    backdrop.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 2999;
+    `;
+    backdrop.onclick = () => {
+        editModal.remove();
+        backdrop.remove();
+    };
+    
+    document.body.appendChild(backdrop);
+    document.body.appendChild(editModal);
+}
+
+// Save recipe edits from the modal
+function saveRecipeEdits(recipeId) {
+    const recipe = approvedRecipes.find(r => r.id === recipeId);
+    if (!recipe) return;
+    
+    recipe.name = document.getElementById('edit-name').value;
+    
+    // Clean and save ingredients
+    const ingredientsText = document.getElementById('edit-ingredients').value;
+    recipe.ingredients = cleanIngredients(ingredientsText);
+    
+    // Save instructions
+    const instructionsText = document.getElementById('edit-instructions').value;
+    recipe.instructions = instructionsText.split(/\n+/).filter(i => i.trim().length > 0);
+    
+    recipe.prepTime = parseInt(document.getElementById('edit-preptime').value) || 30;
+    recipe.notes = document.getElementById('edit-notes').value;
     
     updateRecipeDisplay();
     updateMealSuggestions();
+    saveRecipesToStorage();
     showSuccessMessage('Recipe updated!');
     
-    // Close modal
-    document.querySelector('div[style*="z-index: 2000"]')?.remove();
-    document.querySelector('div[style*="z-index: 1999"]')?.remove();
+    // Close edit modal
+    document.querySelector('div[style*="z-index: 3000"]')?.remove();
+    document.getElementById('edit-backdrop')?.remove();
 }
 
 // Add function to delete recipe
