@@ -572,6 +572,10 @@ function loadPantryFromStorage() {
 
 // Initialize the app
 document.addEventListener('DOMContentLoaded', function() {
+    // Clear old data to start fresh
+    localStorage.removeItem('fortKitchenRecipes');
+    localStorage.removeItem('fortKitchenPantry');
+    
     loadPantryFromStorage();
     loadRecipesFromStorage();
     updateInventoryDisplay();
@@ -579,6 +583,19 @@ document.addEventListener('DOMContentLoaded', function() {
     updateMealSuggestions();
     showSuccessMessage('🏰 Fort Kitchen Command ready - Add your favorite recipes!');
 });
+
+// Reset function to clear everything
+function resetApp() {
+    if (confirm('This will delete all recipes and pantry items. Are you sure?')) {
+        localStorage.clear();
+        approvedRecipes = [];
+        pantryInventory = [];
+        updateInventoryDisplay();
+        updateRecipeDisplay();
+        updateMealSuggestions();
+        showSuccessMessage('🔄 App reset! All data cleared.');
+    }
+}
 
 // Add PWA service worker registration
 if ('serviceWorker' in navigator) {

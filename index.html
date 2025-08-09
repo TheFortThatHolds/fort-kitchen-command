@@ -313,12 +313,12 @@
         <div class="header">
             <h1>🏰 Fort Kitchen Command</h1>
             <p>Decision-Free WFPBNO + GF Meal Management</p>
-            <p style="font-size: 0.9em; opacity: 0.8;">Channeling Saul Ember's Sacred Desert Kitchen Wisdom</p>
             <div class="main-nav">
                 <button class="nav-button active" onclick="showSection('pantry')">📸 Pantry Tracker</button>
                 <button class="nav-button" onclick="showSection('recipes')">📝 Recipe Database</button>
                 <button class="nav-button" onclick="showSection('meals')">🍽️ Tonight's Meals</button>
                 <button class="nav-button" onclick="showSection('shopping')">🛒 Shopping Lists</button>
+                <button class="nav-button" onclick="resetApp()" style="background: linear-gradient(45deg, #ff6b6b, #ee5a52);">🔄 Reset All</button>
             </div>
         </div>
 
@@ -363,26 +363,9 @@
             <p>Based on your current pantry and approved recipes</p>
             
             <div class="meal-suggestion">
-                <h3>🎯 Tonight's Options (No Decision Required!)</h3>
-                <div class="meal-options">
-                    <div class="meal-option" onclick="selectMeal('tempeh-pasta')">
-                        <h4>Tempeh & Vegetable Pasta</h4>
-                        <p>✅ All ingredients available</p>
-                        <p>⏱️ 25 minutes</p>
-                        <p>🔥 Comfort food</p>
-                    </div>
-                    <div class="meal-option" onclick="selectMeal('quinoa-bowl')">
-                        <h4>Black Bean Quinoa Bowl</h4>
-                        <p>✅ All ingredients available</p>
-                        <p>⏱️ 20 minutes</p>
-                        <p>🌱 Healthy option</p>
-                    </div>
-                    <div class="meal-option" onclick="selectMeal('leftover')">
-                        <h4>Creative Leftovers</h4>
-                        <p>🍲 Use what needs eating</p>
-                        <p>⏱️ 15 minutes</p>
-                        <p>♻️ Zero waste</p>
-                    </div>
+                <h3>🎯 Tonight's Options</h3>
+                <div class="meal-options" id="meal-options">
+                    <p style="opacity: 0.7; text-align: center;">Add some recipes first to see meal suggestions!</p>
                 </div>
                 <div id="selected-meal" style="margin-top: 20px; display: none;">
                     <h4>Selected: <span id="meal-name"></span></h4>
