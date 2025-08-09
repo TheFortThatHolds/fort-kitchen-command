@@ -1,0 +1,20 @@
+{
+  "name": "fort-kitchen-command",
+  "version": "1.0.0",
+  "description": "Decision-Free WFPBNO + GF Meal Management PWA",
+  "main": "index.html",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "echo 'No build step required'"
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.7",
+    "cheerio": "^1.0.0-rc.12"
+  },
+  "devDependencies": {
+    "netlify-cli": "^15.0.0"
+  },
+  "keywords": ["pwa", "recipes", "meal-planning", "wfpbno"],
+  "author": "Fort That Holds LLC",
+  "license": "MIT"
+}

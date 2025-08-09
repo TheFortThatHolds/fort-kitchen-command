@@ -98,6 +98,8 @@ function addNewRecipe() {
     const prepTime = parseInt(prompt('Prep time (minutes):'));
     if (!prepTime) return;
     
+    const sourceURL = prompt('Source website (optional - for attribution):') || null;
+    
     const notes = prompt('Notes (optional):') || '';
     
     const instructions = [];
@@ -115,8 +117,8 @@ function addNewRecipe() {
         approved: true,  // Auto-approve since no Chris approval needed
         notes: notes,
         instructions: instructions,
-        sourceURL: null,
-        sourceName: null
+        sourceURL: sourceURL,
+        sourceName: sourceURL ? new URL(sourceURL).hostname.replace('www.', '') : null
     };
     
     approvedRecipes.push(newRecipe);
@@ -396,25 +398,29 @@ function importRecipeFromURL() {
             sourceName = 'External Recipe';
         }
         
-        // Prompt for basic recipe info since we can't actually fetch
-        const recipeName = prompt('Recipe name:', 'Imported Recipe');
-        if (!recipeName) return;
+        // Use Netlify function to extract recipe
+        const response = await fetch('/.netlify/functions/extract-recipe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: url })
+        });
         
-        const ingredients = prompt('Main ingredients (comma-separated):');
-        if (!ingredients) return;
+        if (!response.ok) {
+            throw new Error('Failed to extract recipe');
+        }
         
-        const prepTime = parseInt(prompt('Prep time (minutes):')) || 30;
+        const recipeData = await response.json();
         
         const newRecipe = {
-            id: recipeName.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now(),
-            name: recipeName,
-            ingredients: ingredients.split(',').map(i => i.trim()),
-            prepTime: prepTime,
+            id: recipeData.title.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now(),
+            name: recipeData.title,
+            ingredients: recipeData.ingredients.length > 0 ? recipeData.ingredients : ['See original recipe for ingredients'],
+            prepTime: recipeData.prepTime || 30,
             approved: true,
             notes: `Imported from ${sourceName}`,
             sourceURL: url,
             sourceName: sourceName,
-            instructions: ['Visit the original recipe for detailed instructions']
+            instructions: recipeData.instructions.length > 0 ? recipeData.instructions : ['Visit the original recipe for detailed instructions']
         };
         
         approvedRecipes.push(newRecipe);
@@ -583,6 +589,55 @@ document.addEventListener('DOMContentLoaded', function() {
     updateMealSuggestions();
     showSuccessMessage('🏰 Fort Kitchen Command ready - Add your favorite recipes!');
 });
+
+// Quick add function for pasting recipe text
+function quickAddRecipe() {
+    const recipeText = prompt('Paste the entire recipe text here (title, ingredients, instructions):');
+    if (!recipeText) return;
+    
+    const sourceURL = prompt('Recipe source URL (optional):') || null;
+    
+    // Simple parsing - extract title from first line
+    const lines = recipeText.split('\n').filter(line => line.trim());
+    const recipeName = lines[0] || 'Quick Recipe';
+    
+    // Try to find ingredients (lines with common ingredient words)
+    const ingredientKeywords = ['cup', 'tsp', 'tbsp', 'oz', 'lb', 'pound', 'ounce', 'tablespoon', 'teaspoon'];
+    const ingredients = lines.filter(line => 
+        ingredientKeywords.some(keyword => line.toLowerCase().includes(keyword)) ||
+        line.match(/^\d+/) || // starts with number
+        line.includes('•') || line.includes('-') // bullet points
+    ).slice(0, 20); // limit to 20 ingredients
+    
+    // If no ingredients found, use some lines after the title
+    const finalIngredients = ingredients.length > 0 ? ingredients : lines.slice(1, 10);
+    
+    let sourceName = null;
+    if (sourceURL) {
+        try {
+            sourceName = new URL(sourceURL).hostname.replace('www.', '');
+        } catch (e) {
+            sourceName = 'External Recipe';
+        }
+    }
+    
+    const newRecipe = {
+        id: recipeName.toLowerCase().replace(/\\s+/g, '-') + '-' + Date.now(),
+        name: recipeName,
+        ingredients: finalIngredients.length > 0 ? finalIngredients : ['See recipe text for ingredients'],
+        prepTime: 30,
+        approved: true,
+        notes: 'Quick-added recipe',
+        sourceURL: sourceURL,
+        sourceName: sourceName,
+        instructions: ['See original recipe for detailed instructions']
+    };
+    
+    approvedRecipes.push(newRecipe);
+    updateRecipeDisplay();
+    updateMealSuggestions();
+    showSuccessMessage(`Quick recipe "${recipeName}" added!`);
+}
 
 // Reset function to clear everything
 function resetApp() {
