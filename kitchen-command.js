@@ -93,12 +93,42 @@ function manualAddInventory() {
 }
 
 // Recipe Management Functions
+// Helper function to clean up messy ingredient lists
+function cleanIngredients(ingredientsText) {
+    // Remove common formatting issues
+    let cleaned = ingredientsText
+        .replace(/▢/g, '') // Remove checkbox symbols
+        .replace(/US Customary.*?Metric/gi, '') // Remove measurement toggles
+        .replace(/Ingredients/gi, '') // Remove "Ingredients" headers
+        .replace(/\s+/g, ' ') // Normalize whitespace
+        .trim();
+    
+    // Split by commas or common separators
+    let ingredients = cleaned.split(/[,\n]/);
+    
+    // Clean each ingredient
+    ingredients = ingredients
+        .map(ing => ing.trim())
+        .filter(ing => {
+            // Filter out empty, single words, or numbers
+            return ing.length > 3 && 
+                   !(/^\d+$/.test(ing)) && // Not just numbers
+                   ing.split(' ').length > 1; // More than one word
+        });
+    
+    // Remove duplicates
+    return [...new Set(ingredients)];
+}
+
 function addNewRecipe() {
     const recipeName = prompt('Recipe name:');
     if (!recipeName) return;
     
-    const ingredients = prompt('Ingredients (comma-separated):');
-    if (!ingredients) return;
+    const ingredientsRaw = prompt('Ingredients (paste or type, comma-separated):');
+    if (!ingredientsRaw) return;
+    
+    // Clean up the ingredients
+    const ingredients = cleanIngredients(ingredientsRaw);
     
     const prepTime = parseInt(prompt('Prep time (minutes):'));
     if (!prepTime) return;
@@ -117,7 +147,7 @@ function addNewRecipe() {
     const newRecipe = {
         id: recipeName.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now(),
         name: recipeName,
-        ingredients: ingredients.split(',').map(i => i.trim()),
+        ingredients: ingredients, // Already cleaned
         prepTime: prepTime,
         approved: true,  // Auto-approve since no Chris approval needed
         notes: notes,
