@@ -1,7 +1,7 @@
 // Fort Kitchen Command - Service Worker
 // PWA functionality for offline usage
 
-const CACHE_NAME = 'fort-kitchen-command-v1';
+const CACHE_NAME = 'fort-kitchen-command-v2';
 const urlsToCache = [
     '/',
     '/index.html',
@@ -10,12 +10,31 @@ const urlsToCache = [
 ];
 
 self.addEventListener('install', function(event) {
+    // Force new service worker to activate immediately
+    self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(function(cache) {
                 return cache.addAll(urlsToCache);
             })
     );
+});
+
+self.addEventListener('activate', function(event) {
+    // Clear old caches
+    event.waitUntil(
+        caches.keys().then(function(cacheNames) {
+            return Promise.all(
+                cacheNames.filter(function(cacheName) {
+                    return cacheName !== CACHE_NAME;
+                }).map(function(cacheName) {
+                    return caches.delete(cacheName);
+                })
+            );
+        })
+    );
+    // Take control immediately
+    self.clients.claim();
 });
 
 self.addEventListener('fetch', function(event) {

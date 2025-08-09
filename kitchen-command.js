@@ -195,7 +195,7 @@ function selectMeal(mealId) {
             </ol>
         `;
     } else {
-        instructionsDiv.innerHTML = '<p>Instructions will be added when Chris approves this recipe.</p>';
+        instructionsDiv.innerHTML = '<p>Instructions coming soon.</p>';
     }
     
     // Highlight selected option
