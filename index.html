@@ -139,6 +139,13 @@
             padding: 20px;
             margin: 15px 0;
             border-left: 4px solid #4ecdc4;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .recipe-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(78, 205, 196, 0.3);
         }
         
         .recipe-card h3 {
@@ -155,7 +162,7 @@
             margin: 10px 0;
         }
         
-        .recipe-status.chris-approved {
+        .recipe-status.approved {
             background: linear-gradient(45deg, #4ecdc4, #44a08d);
             color: white;
         }
@@ -305,7 +312,7 @@
     <div class="container">
         <div class="header">
             <h1>🏰 Fort Kitchen Command</h1>
-            <p>Decision-Free WFPBNO + GF Meal Management for Jimmy & Chris</p>
+            <p>Decision-Free WFPBNO + GF Meal Management</p>
             <p style="font-size: 0.9em; opacity: 0.8;">Channeling Saul Ember's Sacred Desert Kitchen Wisdom</p>
             <div class="main-nav">
                 <button class="nav-button active" onclick="showSection('pantry')">📸 Pantry Tracker</button>
@@ -332,20 +339,6 @@
             <h3>Current Inventory</h3>
             <div class="current-inventory" id="current-inventory">
                 <!-- Inventory items will be populated here -->
-                <div class="inventory-item">GF Pasta</div>
-                <div class="inventory-item">Tomato Sauce (No Oil)</div>
-                <div class="inventory-item">Tempeh</div>
-                <div class="inventory-item">Nutritional Yeast</div>
-                <div class="inventory-item">Onions</div>
-                <div class="inventory-item">Garlic</div>
-                <div class="inventory-item">Bell Peppers</div>
-                <div class="inventory-item">Quinoa</div>
-                <div class="inventory-item">Black Beans</div>
-                <div class="inventory-item">Spinach</div>
-                <div class="inventory-item">Cashews</div>
-                <div class="inventory-item">Cumin</div>
-                <div class="inventory-item">Sweet Potatoes</div>
-                <div class="inventory-item">Tahini</div>
             </div>
 
             <button class="btn" onclick="manualAddInventory()">+ Add Item Manually</button>
@@ -354,74 +347,14 @@
         <!-- Recipe Database Section -->
         <div id="recipes" class="section">
             <h2>📝 Recipe Database</h2>
-            <p>16-20 rotating Chris-approved recipes for decision-free cooking</p>
+            <p>Your favorite WFPBNO recipes for decision-free cooking</p>
             
-            <div class="recipe-card">
-                <h3>Desert Oracle Gut-Activating Recovery Chili</h3>
-                <div class="recipe-status chris-approved">✅ Chris Approved (Uncle Pat's WFPBNO Adaptation)</div>
-                <p><strong>Ingredients:</strong> Black beans, kidney beans, sweet potatoes, bell peppers, onions, garlic, tomato sauce (no oil), cumin, smoked paprika, cocoa powder</p>
-                <p><strong>Prep Time:</strong> 35 minutes</p>
-                <p><strong>Notes:</strong> Saul's healing ritual - water-sauté technique, survived smoking session</p>
-            </div>
-
-            <div class="recipe-card">
-                <h3>Sacred Tempeh & Quinoa Bowl</h3>
-                <div class="recipe-status chris-approved">✅ Chris Approved</div>
-                <p><strong>Ingredients:</strong> Quinoa, tempeh, spinach, bell peppers, nutritional yeast, tahini dressing, steamed vegetables</p>
-                <p><strong>Prep Time:</strong> 25 minutes</p>
-                <p><strong>Notes:</strong> WFPBNO power bowl, cast-iron blessed</p>
-            </div>
-
-            <div class="recipe-card">
-                <h3>High Desert Hummus & GF Crackers</h3>
-                <div class="recipe-status chris-approved">✅ Chris Approved</div>
-                <p><strong>Ingredients:</strong> Chickpeas, tahini, lemon juice, garlic, cumin, GF crackers, vegetables for dipping</p>
-                <p><strong>Prep Time:</strong> 15 minutes</p>
-                <p><strong>Notes:</strong> Saul's molcajete-blessed version, perfect for lazy afternoons</p>
-            </div>
-
-            <div class="recipe-card">
-                <h3>Saguaro Sunrise Buddha Bowl</h3>
-                <div class="recipe-status chris-approved">✅ Chris Approved</div>
-                <p><strong>Ingredients:</strong> Roasted sweet potatoes, quinoa, steamed broccoli, chickpeas, avocado, tahini-lemon dressing</p>
-                <p><strong>Prep Time:</strong> 30 minutes</p>
-                <p><strong>Notes:</strong> One-bowl wonder, minimal cleanup required</p>
-            </div>
-
-            <div class="recipe-card">
-                <h3>Stoned Lentil & Veggie Curry</h3>
-                <div class="recipe-status chris-approved">✅ Chris Approved</div>
-                <p><strong>Ingredients:</strong> Red lentils, coconut milk, curry powder, turmeric, ginger, mixed vegetables, GF naan</p>
-                <p><strong>Prep Time:</strong> 25 minutes</p>
-                <p><strong>Notes:</strong> Simmer while stoned, tastes like desert wisdom</p>
-            </div>
-
-            <div class="recipe-card">
-                <h3>Healing Mushroom & Barley Soup</h3>
-                <div class="recipe-status chris-approved">✅ Chris Approved</div>
-                <p><strong>Ingredients:</strong> Mixed mushrooms, pearl barley, vegetable broth, carrots, celery, thyme, nutritional yeast</p>
-                <p><strong>Prep Time:</strong> 40 minutes</p>
-                <p><strong>Notes:</strong> Perfect for recovery days, freezes well</p>
-            </div>
-
-            <div class="recipe-card">
-                <h3>Lazy Sunday Veggie Pasta</h3>
-                <div class="recipe-status chris-approved">✅ Chris Approved</div>
-                <p><strong>Ingredients:</strong> GF pasta, marinara sauce (oil-free), zucchini, bell peppers, spinach, nutritional yeast</p>
-                <p><strong>Prep Time:</strong> 20 minutes</p>
-                <p><strong>Notes:</strong> Jimmy's go-to when he doesn't want to think</p>
-            </div>
-
-            <div class="recipe-card">
-                <h3>Desert Storm Tacos</h3>
-                <div class="recipe-status chris-approved">✅ Chris Approved</div>
-                <p><strong>Ingredients:</strong> GF corn tortillas, black beans, roasted sweet potatoes, avocado, salsa, lime, cilantro</p>
-                <p><strong>Prep Time:</strong> 20 minutes</p>
-                <p><strong>Notes:</strong> Assembly-line style, Chris can customize his own</p>
+            <div id="recipe-container">
+                <!-- Recipes will be dynamically loaded here -->
             </div>
 
             <button class="btn" onclick="addNewRecipe()">+ Add New Recipe</button>
-            <button class="btn btn-secondary" onclick="requestApproval()">Request Chris Approval</button>
+            <button class="btn" onclick="importRecipeFromURL()">🔗 Import from URL</button>
         </div>
 
         <!-- Tonight's Meals Section -->
@@ -432,14 +365,14 @@
             <div class="meal-suggestion">
                 <h3>🎯 Tonight's Options (No Decision Required!)</h3>
                 <div class="meal-options">
-                    <div class="meal-option" onclick="selectMeal('turkey-pasta')">
-                        <h4>Turkey & Vegetable Pasta</h4>
+                    <div class="meal-option" onclick="selectMeal('tempeh-pasta')">
+                        <h4>Tempeh & Vegetable Pasta</h4>
                         <p>✅ All ingredients available</p>
                         <p>⏱️ 25 minutes</p>
                         <p>🔥 Comfort food</p>
                     </div>
-                    <div class="meal-option" onclick="selectMeal('rice-bowl')">
-                        <h4>Black Bean Rice Bowl</h4>
+                    <div class="meal-option" onclick="selectMeal('quinoa-bowl')">
+                        <h4>Black Bean Quinoa Bowl</h4>
                         <p>✅ All ingredients available</p>
                         <p>⏱️ 20 minutes</p>
                         <p>🌱 Healthy option</p>
@@ -471,8 +404,8 @@
                 <div class="store-section">
                     <h4>🛒 Walmart Pickup</h4>
                     <div class="grocery-item">
-                        <span>Ground Turkey (2 lbs)</span>
-                        <span>$8.99</span>
+                        <span>Tempeh (3 packages)</span>
+                        <span>$11.99</span>
                     </div>
                     <div class="grocery-item">
                         <span>Pasta (3 boxes)</span>

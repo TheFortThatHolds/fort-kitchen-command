@@ -1,52 +1,11 @@
 // Fort Kitchen Command - Decision-Free Meal Management System
 // JavaScript functionality for pantry tracking, recipe management, and shopping lists
 
-let pantryInventory = [
-    'Pasta', 'Tomato Sauce', 'Ground Turkey', 'Onions', 'Garlic', 
-    'Bell Peppers', 'Rice', 'Black Beans', 'Spinach', 'Cheese'
-];
+// Pantry inventory - stored in localStorage
+let pantryInventory = [];
 
-let approvedRecipes = [
-    {
-        id: 'turkey-pasta',
-        name: 'Turkey & Vegetable Pasta',
-        ingredients: ['Ground Turkey', 'Pasta', 'Bell Peppers', 'Onions', 'Garlic', 'Tomato Sauce', 'Spinach'],
-        prepTime: 25,
-        approved: true,
-        notes: 'Quick weeknight meal, all ingredients usually in stock',
-        instructions: [
-            'Brown ground turkey in large pan',
-            'Add diced onions and garlic, cook 3 minutes',
-            'Add bell peppers, cook 5 minutes',
-            'Stir in tomato sauce, simmer 10 minutes',
-            'Add cooked pasta and spinach, toss together',
-            'Serve immediately'
-        ]
-    },
-    {
-        id: 'rice-bowl',
-        name: 'Black Bean Rice Bowl',
-        ingredients: ['Rice', 'Black Beans', 'Bell Peppers', 'Onions', 'Cheese', 'Spinach'],
-        prepTime: 20,
-        approved: true,
-        notes: 'Healthy, filling, easy cleanup',
-        instructions: [
-            'Cook rice according to package directions',
-            'Sauté onions and bell peppers until soft',
-            'Heat black beans with vegetables',
-            'Serve over rice with spinach and cheese',
-            'Add hot sauce if desired'
-        ]
-    },
-    {
-        id: 'stir-fry',
-        name: 'Stir-Fry Vegetables',
-        ingredients: ['Mixed Vegetables', 'Rice', 'Soy Sauce', 'Garlic', 'Ginger'],
-        prepTime: 15,
-        approved: false,
-        notes: 'Need to check with Chris on sauce preferences'
-    }
-];
+// Recipes stored in localStorage for persistence
+let approvedRecipes = [];
 
 // Navigation Functions
 function showSection(sectionId) {
@@ -76,10 +35,9 @@ function uploadPantryPhotos(event) {
         
         setTimeout(() => {
             // Simulate detected items
+            // Simulate detected items - in a real app this would use AI
             const detectedItems = [
-                'Pasta', 'Tomato Sauce', 'Ground Turkey', 'Onions', 'Garlic',
-                'Bell Peppers', 'Rice', 'Black Beans', 'Spinach', 'Cheese',
-                'Bread', 'Eggs', 'Milk', 'Carrots', 'Broccoli'
+                'Item 1', 'Item 2', 'Item 3'
             ];
             
             // Update pantry inventory
@@ -96,14 +54,19 @@ function updateInventoryDisplay() {
     const inventoryContainer = document.getElementById('current-inventory');
     inventoryContainer.innerHTML = '';
     
-    pantryInventory.forEach(item => {
-        const itemDiv = document.createElement('div');
-        itemDiv.className = 'inventory-item';
-        itemDiv.textContent = item;
-        itemDiv.onclick = () => removeInventoryItem(item);
-        itemDiv.title = 'Click to remove';
-        inventoryContainer.appendChild(itemDiv);
-    });
+    if (pantryInventory.length === 0) {
+        inventoryContainer.innerHTML = '<p style="opacity: 0.7; text-align: center; grid-column: 1/-1;">No items in pantry yet. Upload photos or add items manually!</p>';
+    } else {
+        pantryInventory.forEach(item => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'inventory-item';
+            itemDiv.textContent = item;
+            itemDiv.onclick = () => removeInventoryItem(item);
+            itemDiv.title = 'Click to remove';
+            inventoryContainer.appendChild(itemDiv);
+        });
+    }
+    savePantryToStorage();
 }
 
 function removeInventoryItem(item) {
@@ -137,44 +100,77 @@ function addNewRecipe() {
     
     const notes = prompt('Notes (optional):') || '';
     
+    const instructions = [];
+    let step = prompt('Enter cooking instruction (or leave empty to finish):');
+    while (step && step.trim()) {
+        instructions.push(step.trim());
+        step = prompt('Enter next instruction (or leave empty to finish):');
+    }
+    
     const newRecipe = {
-        id: recipeName.toLowerCase().replace(/\s+/g, '-'),
+        id: recipeName.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now(),
         name: recipeName,
         ingredients: ingredients.split(',').map(i => i.trim()),
         prepTime: prepTime,
-        approved: false,
-        notes: notes
+        approved: true,  // Auto-approve since no Chris approval needed
+        notes: notes,
+        instructions: instructions,
+        sourceURL: null,
+        sourceName: null
     };
     
     approvedRecipes.push(newRecipe);
     updateRecipeDisplay();
-    showSuccessMessage(`Added recipe "${recipeName}" - needs Chris approval!`);
+    updateMealSuggestions();
+    showSuccessMessage(`Added recipe "${recipeName}"!`);
+    
+    // Update meal suggestions
+    setTimeout(() => {
+        showSection('recipes');
+    }, 100);
 }
 
-function requestApproval() {
-    const pendingRecipes = approvedRecipes.filter(r => !r.approved);
-    if (pendingRecipes.length === 0) {
-        showInfoMessage('All recipes are already approved!');
-        return;
-    }
-    
-    // Simulate sending approval request
-    showInfoMessage(`📧 Approval request sent to Chris for ${pendingRecipes.length} recipes!`);
-    
-    // For demo, auto-approve after 3 seconds
-    setTimeout(() => {
-        pendingRecipes.forEach(recipe => {
-            recipe.approved = true;
-        });
+function toggleRecipeApproval(recipeId) {
+    const recipe = approvedRecipes.find(r => r.id === recipeId);
+    if (recipe) {
+        recipe.approved = !recipe.approved;
         updateRecipeDisplay();
         updateMealSuggestions();
-        showSuccessMessage('🎉 Chris approved the recipes!');
-    }, 3000);
+        showSuccessMessage(recipe.approved ? '✅ Recipe approved!' : '⏸️ Recipe set to pending');
+    }
 }
 
 function updateRecipeDisplay() {
-    // This would update the recipe cards in the DOM
-    console.log('Updating recipe display with', approvedRecipes.length, 'recipes');
+    const container = document.getElementById('recipe-container');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    if (approvedRecipes.length === 0) {
+        container.innerHTML = '<p style="opacity: 0.7; text-align: center;">No recipes yet. Click "+ Add New Recipe" or "Import from URL" to get started!</p>';
+    } else {
+        approvedRecipes.forEach(recipe => {
+        const recipeCard = document.createElement('div');
+        recipeCard.className = 'recipe-card';
+        recipeCard.onclick = () => showRecipeDetails(recipe.id);
+        
+        const statusClass = recipe.approved ? 'approved' : 'pending';
+        const statusText = recipe.approved ? '✅ Approved' : '⏸️ Pending';
+        
+        recipeCard.innerHTML = `
+            <h3>${recipe.name}</h3>
+            <div class="recipe-status ${statusClass}">${statusText}</div>
+            ${recipe.sourceURL ? `<p style="font-size: 0.9em; opacity: 0.8;">📌 From: <a href="${recipe.sourceURL}" target="_blank" style="color: #4ecdc4;">${recipe.sourceName || new URL(recipe.sourceURL).hostname}</a></p>` : ''}
+            <p><strong>Ingredients:</strong> ${recipe.ingredients.join(', ')}</p>
+            <p><strong>Prep Time:</strong> ${recipe.prepTime} minutes</p>
+            ${recipe.notes ? `<p><strong>Notes:</strong> ${recipe.notes}</p>` : ''}
+        `;
+        
+            container.appendChild(recipeCard);
+        });
+    }
+    
+    saveRecipesToStorage();
 }
 
 // Meal Planning Functions
@@ -248,7 +244,7 @@ Fort Kitchen Command - Shopping List
 Generated: ${new Date().toLocaleDateString()}
 
 WALMART PICKUP:
-- Ground Turkey (2 lbs) - $8.99
+- Tempeh (3 packages) - $11.99
 - Pasta (3 boxes) - $4.50
 - Rice (5 lb bag) - $3.99
 - Onions (3 lb bag) - $2.49
@@ -262,7 +258,7 @@ SPROUTS:
 - Black Beans (4 cans) - $4.76
 - Tomato Sauce (6 cans) - $6.99
 
-TOTAL: $51.19
+TOTAL: $54.19
     `;
     
     // Copy to clipboard
@@ -379,11 +375,209 @@ slideStyle.textContent = `
 `;
 document.head.appendChild(slideStyle);
 
+// Add function to import recipe from URL
+function importRecipeFromURL() {
+    const url = prompt('Enter the recipe URL:');
+    if (!url) return;
+    
+    showLoadingMessage('Fetching recipe from website...');
+    
+    // Simulate fetching and parsing - in production this would use a real parser
+    // Many recipe sites use structured data (JSON-LD) that can be parsed
+    setTimeout(() => {
+        hideLoadingMessage();
+        
+        // For demo, extract domain name for attribution
+        let sourceName;
+        try {
+            const urlObj = new URL(url);
+            sourceName = urlObj.hostname.replace('www.', '');
+        } catch (e) {
+            sourceName = 'External Recipe';
+        }
+        
+        // Prompt for basic recipe info since we can't actually fetch
+        const recipeName = prompt('Recipe name:', 'Imported Recipe');
+        if (!recipeName) return;
+        
+        const ingredients = prompt('Main ingredients (comma-separated):');
+        if (!ingredients) return;
+        
+        const prepTime = parseInt(prompt('Prep time (minutes):')) || 30;
+        
+        const newRecipe = {
+            id: recipeName.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now(),
+            name: recipeName,
+            ingredients: ingredients.split(',').map(i => i.trim()),
+            prepTime: prepTime,
+            approved: true,
+            notes: `Imported from ${sourceName}`,
+            sourceURL: url,
+            sourceName: sourceName,
+            instructions: ['Visit the original recipe for detailed instructions']
+        };
+        
+        approvedRecipes.push(newRecipe);
+        updateRecipeDisplay();
+        updateMealSuggestions();
+        showSuccessMessage(`Recipe imported from ${sourceName}!`);
+    }, 1500);
+}
+
+// Add function to show recipe details
+function showRecipeDetails(recipeId) {
+    const recipe = approvedRecipes.find(r => r.id === recipeId);
+    if (!recipe) return;
+    
+    let detailsHTML = `
+        <h3>${recipe.name}</h3>
+        ${recipe.sourceURL ? `<p>📌 <a href="${recipe.sourceURL}" target="_blank" style="color: #4ecdc4;">View original recipe at ${recipe.sourceName}</a></p>` : ''}
+        <p><strong>Prep Time:</strong> ${recipe.prepTime} minutes</p>
+        <p><strong>Ingredients:</strong></p>
+        <ul>${recipe.ingredients.map(i => `<li>${i}</li>`).join('')}</ul>
+    `;
+    
+    if (recipe.instructions && recipe.instructions.length > 0) {
+        detailsHTML += `
+            <p><strong>Instructions:</strong></p>
+            <ol>${recipe.instructions.map(i => `<li>${i}</li>`).join('')}</ol>
+        `;
+    }
+    
+    if (recipe.notes) {
+        detailsHTML += `<p><strong>Notes:</strong> ${recipe.notes}</p>`;
+    }
+    
+    detailsHTML += `
+        <br>
+        <button class="btn" onclick="editRecipe('${recipeId}')">Edit Recipe</button>
+        <button class="btn btn-secondary" onclick="deleteRecipe('${recipeId}')">Delete Recipe</button>
+    `;
+    
+    // Create modal or expand card
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+        border: 2px solid #4ecdc4;
+        border-radius: 20px;
+        padding: 30px;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+        z-index: 2000;
+        color: white;
+    `;
+    modal.innerHTML = detailsHTML;
+    
+    // Add backdrop
+    const backdrop = document.createElement('div');
+    backdrop.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 1999;
+    `;
+    backdrop.onclick = () => {
+        modal.remove();
+        backdrop.remove();
+    };
+    
+    document.body.appendChild(backdrop);
+    document.body.appendChild(modal);
+}
+
+// Add function to edit recipe
+function editRecipe(recipeId) {
+    const recipe = approvedRecipes.find(r => r.id === recipeId);
+    if (!recipe) return;
+    
+    const newName = prompt('Recipe name:', recipe.name);
+    if (newName) recipe.name = newName;
+    
+    const newIngredients = prompt('Ingredients (comma-separated):', recipe.ingredients.join(', '));
+    if (newIngredients) recipe.ingredients = newIngredients.split(',').map(i => i.trim());
+    
+    const newPrepTime = prompt('Prep time (minutes):', recipe.prepTime);
+    if (newPrepTime) recipe.prepTime = parseInt(newPrepTime);
+    
+    const newNotes = prompt('Notes:', recipe.notes || '');
+    recipe.notes = newNotes;
+    
+    updateRecipeDisplay();
+    updateMealSuggestions();
+    showSuccessMessage('Recipe updated!');
+    
+    // Close modal
+    document.querySelector('div[style*="z-index: 2000"]')?.remove();
+    document.querySelector('div[style*="z-index: 1999"]')?.remove();
+}
+
+// Add function to delete recipe
+function deleteRecipe(recipeId) {
+    if (confirm('Are you sure you want to delete this recipe?')) {
+        approvedRecipes = approvedRecipes.filter(r => r.id !== recipeId);
+        updateRecipeDisplay();
+        updateMealSuggestions();
+        showSuccessMessage('Recipe deleted!');
+        
+        // Close modal
+        document.querySelector('div[style*="z-index: 2000"]')?.remove();
+        document.querySelector('div[style*="z-index: 1999"]')?.remove();
+    }
+}
+
+// Add functions to save/load recipes from localStorage
+function saveRecipesToStorage() {
+    localStorage.setItem('fortKitchenRecipes', JSON.stringify(approvedRecipes));
+}
+
+function loadRecipesFromStorage() {
+    const stored = localStorage.getItem('fortKitchenRecipes');
+    if (stored) {
+        try {
+            approvedRecipes = JSON.parse(stored);
+        } catch (e) {
+            console.error('Failed to load recipes from storage');
+            approvedRecipes = [];
+        }
+    } else {
+        approvedRecipes = [];
+    }
+}
+
+function savePantryToStorage() {
+    localStorage.setItem('fortKitchenPantry', JSON.stringify(pantryInventory));
+}
+
+function loadPantryFromStorage() {
+    const stored = localStorage.getItem('fortKitchenPantry');
+    if (stored) {
+        try {
+            pantryInventory = JSON.parse(stored);
+        } catch (e) {
+            console.error('Failed to load pantry from storage');
+            pantryInventory = [];
+        }
+    } else {
+        pantryInventory = [];
+    }
+}
+
 // Initialize the app
 document.addEventListener('DOMContentLoaded', function() {
+    loadPantryFromStorage();
+    loadRecipesFromStorage();
     updateInventoryDisplay();
+    updateRecipeDisplay();
     updateMealSuggestions();
-    showSuccessMessage('🏰 Fort Kitchen Command initialized - Decision-free cooking ready!');
+    showSuccessMessage('🏰 Fort Kitchen Command ready - Add your favorite recipes!');
 });
 
 // Add PWA service worker registration
