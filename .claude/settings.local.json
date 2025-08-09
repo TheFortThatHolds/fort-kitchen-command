@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "WebFetch(domain:healthymidwesterngirl.com)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(rm:*)",
+      "Bash(del \"C:\\Users\\Fort That Holds LLC\\Documents\\GitHub\\fort-kitchen-command\\Living Scrolls\\LIVING_SCROLL_2025-08-10.md\")",
+      "Bash(mv:*)",
+      "Bash(wc:*)",
+      "Bash(diff:*)"
     ],
     "deny": []
   }
