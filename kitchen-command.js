@@ -20,10 +20,15 @@ function showSection(sectionId) {
     });
     
     // Show selected section
-    document.getElementById(sectionId).classList.add('active');
+    const section = document.getElementById(sectionId);
+    if (section) {
+        section.classList.add('active');
+    }
     
     // Add active class to clicked button
-    event.target.classList.add('active');
+    if (event && event.target) {
+        event.target.classList.add('active');
+    }
 }
 
 // Pantry Management Functions
@@ -410,18 +415,14 @@ slideStyle.textContent = `
 document.head.appendChild(slideStyle);
 
 // Add function to import recipe from URL
-function importRecipeFromURL() {
+async function importRecipeFromURL() {
     const url = prompt('Enter the recipe URL:');
     if (!url) return;
     
     showLoadingMessage('Fetching recipe from website...');
     
-    // Simulate fetching and parsing - in production this would use a real parser
-    // Many recipe sites use structured data (JSON-LD) that can be parsed
-    setTimeout(() => {
-        hideLoadingMessage();
-        
-        // For demo, extract domain name for attribution
+    try {
+        // Extract domain name for attribution
         let sourceName;
         try {
             const urlObj = new URL(url);
@@ -436,6 +437,8 @@ function importRecipeFromURL() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ url: url })
         });
+        
+        hideLoadingMessage();
         
         if (!response.ok) {
             throw new Error('Failed to extract recipe');
@@ -458,8 +461,39 @@ function importRecipeFromURL() {
         approvedRecipes.push(newRecipe);
         updateRecipeDisplay();
         updateMealSuggestions();
-        showSuccessMessage(`Recipe imported from ${sourceName}!`);
-    }, 1500);
+        showSuccessMessage(`Recipe "${recipeData.title}" imported from ${sourceName}!`);
+    } catch (error) {
+        hideLoadingMessage();
+        
+        // Fallback - just create a link recipe
+        const recipeName = prompt('Recipe name (or cancel):', 'Imported Recipe');
+        if (!recipeName) return;
+        
+        let sourceName;
+        try {
+            const urlObj = new URL(url);
+            sourceName = urlObj.hostname.replace('www.', '');
+        } catch (e) {
+            sourceName = 'External Recipe';
+        }
+        
+        const newRecipe = {
+            id: recipeName.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now(),
+            name: recipeName,
+            ingredients: ['See original recipe for ingredients'],
+            prepTime: 30,
+            approved: true,
+            notes: `Imported from ${sourceName}`,
+            sourceURL: url,
+            sourceName: sourceName,
+            instructions: ['Visit the original recipe for detailed instructions']
+        };
+        
+        approvedRecipes.push(newRecipe);
+        updateRecipeDisplay();
+        updateMealSuggestions();
+        showSuccessMessage(`Recipe link added - you can edit it to add full details!`);
+    }
 }
 
 // Add function to show recipe details
