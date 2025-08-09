@@ -230,38 +230,70 @@ function updateMealSuggestions() {
 
 // Shopping List Functions
 function generateShoppingList() {
-    showLoadingMessage('Generating smart shopping list...');
+    if (approvedRecipes.length === 0) {
+        showErrorMessage('Add some recipes first to generate a shopping list!');
+        return;
+    }
+    
+    showLoadingMessage('Generating shopping list from your recipes...');
     
     setTimeout(() => {
-        // Simulate shopping list generation based on recipes and inventory
+        // Collect all ingredients from all recipes
+        let allIngredients = [];
+        approvedRecipes.forEach(recipe => {
+            allIngredients.push(...recipe.ingredients);
+        });
+        
+        // Remove duplicates and filter out what you already have in pantry
+        const uniqueIngredients = [...new Set(allIngredients)];
+        const shoppingItems = uniqueIngredients.filter(ingredient => 
+            !pantryInventory.some(pantryItem => 
+                ingredient.toLowerCase().includes(pantryItem.toLowerCase()) ||
+                pantryItem.toLowerCase().includes(ingredient.toLowerCase())
+            )
+        );
+        
+        // Update the shopping list display
+        const container = document.getElementById('shopping-list-container');
+        
+        if (shoppingItems.length === 0) {
+            container.innerHTML = '<p style="text-align: center; opacity: 0.8;">✅ You have everything you need for your recipes!</p>';
+        } else {
+            let listHTML = '<h4>🛒 Shopping List</h4>';
+            shoppingItems.forEach(item => {
+                listHTML += `
+                    <div class="grocery-item">
+                        <span>${item}</span>
+                        <span style="opacity: 0.7;">□</span>
+                    </div>
+                `;
+            });
+            container.innerHTML = listHTML;
+        }
+        
         hideLoadingMessage();
-        showSuccessMessage('🛒 Shopping list updated based on your meal rotation!');
-    }, 1500);
+        showSuccessMessage(`📝 Generated shopping list with ${shoppingItems.length} items!`);
+    }, 1000);
 }
 
 function exportShoppingList() {
-    // Create a simple text version for mobile
-    const shoppingList = `
-Fort Kitchen Command - Shopping List
-Generated: ${new Date().toLocaleDateString()}
-
-WALMART PICKUP:
-- Tempeh (3 packages) - $11.99
-- Pasta (3 boxes) - $4.50
-- Rice (5 lb bag) - $3.99
-- Onions (3 lb bag) - $2.49
-
-WHOLE FOODS:
-- Organic Spinach (2 containers) - $7.98
-- Bell Peppers (6 count) - $8.50
-- Fresh Garlic - $2.99
-
-SPROUTS:
-- Black Beans (4 cans) - $4.76
-- Tomato Sauce (6 cans) - $6.99
-
-TOTAL: $54.19
-    `;
+    // Collect current shopping list items
+    const container = document.getElementById('shopping-list-container');
+    const groceryItems = container.querySelectorAll('.grocery-item');
+    
+    if (groceryItems.length === 0) {
+        showErrorMessage('Generate a shopping list first!');
+        return;
+    }
+    
+    let shoppingList = `Fort Kitchen Command - Shopping List\nGenerated: ${new Date().toLocaleDateString()}\n\n`;
+    
+    groceryItems.forEach(item => {
+        const itemText = item.querySelector('span').textContent;
+        shoppingList += `□ ${itemText}\n`;
+    });
+    
+    shoppingList += `\nTotal items: ${groceryItems.length}`;
     
     // Copy to clipboard
     navigator.clipboard.writeText(shoppingList).then(() => {
