@@ -311,7 +311,7 @@
         // Register service worker for PWA functionality
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/service-worker.js')
+                navigator.serviceWorker.register('./service-worker.js')
                     .then(function(registration) {
                         console.log('ServiceWorker registration successful');
                     }, function(err) {
@@ -325,7 +325,7 @@
     <div class="container">
         <div class="header">
             <h1>🏰 Fort Kitchen Command</h1>
-            <p>Decision-Free WFPBNO + GF Meal Management</p>
+            <p>Decision-Free Recipe & Meal Management</p>
             <div class="main-nav">
                 <button class="nav-button active" onclick="showSection('pantry')">📸 Pantry Tracker</button>
                 <button class="nav-button" onclick="showSection('recipes')">📝 Recipe Database</button>
@@ -357,7 +357,7 @@
         <!-- Recipe Database Section -->
         <div id="recipes" class="section">
             <h2>📝 Recipe Database</h2>
-            <p>Your favorite WFPBNO recipes for decision-free cooking</p>
+            <p>Your favorite recipes for decision-free cooking</p>
             
             <div style="display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap;">
                 <button class="btn" onclick="addNewRecipe()">+ Add New Recipe</button>

@@ -1,7 +1,7 @@
 {
     "name": "Fort Kitchen Command",
     "short_name": "Kitchen Command",
-    "description": "Decision-Free WFPBNO + GF Meal Management System",
+    "description": "Decision-Free Recipe & Meal Management System",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#1a1a2e",
