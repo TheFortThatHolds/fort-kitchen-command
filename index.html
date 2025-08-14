@@ -307,6 +307,19 @@
             }
         }
     </style>
+    <script>
+        // Register service worker for PWA functionality
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(function(registration) {
+                        console.log('ServiceWorker registration successful');
+                    }, function(err) {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
 </head>
 <body>
     <div class="container">
@@ -346,12 +359,24 @@
             <h2>📝 Recipe Database</h2>
             <p>Your favorite WFPBNO recipes for decision-free cooking</p>
             
+            <div style="display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap;">
+                <button class="btn" onclick="addNewRecipe()">+ Add New Recipe</button>
+                <button class="btn" onclick="importRecipeFromURL()">🔗 Import from URL</button>
+                <button class="btn btn-secondary" onclick="quickAddRecipe()">📋 Quick Add</button>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+                <button class="nav-button" style="padding: 8px 16px; font-size: 0.9em;" onclick="filterRecipesByCategory('all')">All</button>
+                <button class="nav-button" style="padding: 8px 16px; font-size: 0.9em;" onclick="filterRecipesByCategory('breakfast')">🌅 Breakfast</button>
+                <button class="nav-button" style="padding: 8px 16px; font-size: 0.9em;" onclick="filterRecipesByCategory('lunch')">☀️ Lunch</button>
+                <button class="nav-button" style="padding: 8px 16px; font-size: 0.9em;" onclick="filterRecipesByCategory('dinner')">🌙 Dinner</button>
+                <button class="nav-button" style="padding: 8px 16px; font-size: 0.9em;" onclick="filterRecipesByCategory('snack')">🍿 Snacks</button>
+                <button class="nav-button" style="padding: 8px 16px; font-size: 0.9em;" onclick="filterRecipesByCategory('dessert')">🍰 Dessert</button>
+            </div>
+            
             <div id="recipe-container">
                 <!-- Recipes will be dynamically loaded here -->
             </div>
-
-            <button class="btn" onclick="addNewRecipe()">+ Add New Recipe</button>
-            <button class="btn" onclick="importRecipeFromURL()">🔗 Import from URL</button>
         </div>
 
         <!-- Tonight's Meals Section -->
@@ -388,6 +413,6 @@
         </div>
     </div>
 
-    <script src="kitchen-command.js?v=2"></script>
+    <script src="kitchen-command.js?v=3"></script>
 </body>
 </html>

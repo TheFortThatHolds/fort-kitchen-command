@@ -123,6 +123,8 @@ function addNewRecipe() {
     const recipeName = prompt('Recipe name:');
     if (!recipeName) return;
     
+    const category = prompt('Category (breakfast/lunch/dinner/snack/dessert):')?.toLowerCase() || 'dinner';
+    
     const ingredientsRaw = prompt('Ingredients (paste or type, comma-separated):');
     if (!ingredientsRaw) return;
     
@@ -146,6 +148,7 @@ function addNewRecipe() {
     const newRecipe = {
         id: recipeName.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now(),
         name: recipeName,
+        category: category,
         ingredients: ingredients, // Already cleaned
         prepTime: prepTime,
         approved: true,  // Auto-approve since no Chris approval needed
@@ -158,6 +161,7 @@ function addNewRecipe() {
     approvedRecipes.push(newRecipe);
     updateRecipeDisplay();
     updateMealSuggestions();
+    saveRecipesToStorage();
     showSuccessMessage(`Added recipe "${recipeName}"!`);
     
     // Update meal suggestions
@@ -176,37 +180,111 @@ function toggleRecipeApproval(recipeId) {
     }
 }
 
-function updateRecipeDisplay() {
+// Track current filter
+let currentCategoryFilter = 'all';
+
+function updateRecipeDisplay(filter = currentCategoryFilter) {
     const container = document.getElementById('recipe-container');
     if (!container) return;
     
     container.innerHTML = '';
     
-    if (approvedRecipes.length === 0) {
-        container.innerHTML = '<p style="opacity: 0.7; text-align: center;">No recipes yet. Click "+ Add New Recipe" or "Import from URL" to get started!</p>';
+    // Filter recipes by category
+    let recipesToShow = approvedRecipes;
+    if (filter && filter !== 'all') {
+        recipesToShow = approvedRecipes.filter(r => r.category === filter);
+    }
+    
+    if (recipesToShow.length === 0) {
+        if (approvedRecipes.length === 0) {
+            container.innerHTML = '<p style="opacity: 0.7; text-align: center;">No recipes yet. Click "+ Add New Recipe" or "Import from URL" to get started!</p>';
+        } else {
+            container.innerHTML = `<p style="opacity: 0.7; text-align: center;">No ${filter} recipes yet. Add some or view all recipes!</p>`;
+        }
     } else {
-        approvedRecipes.forEach(recipe => {
-        const recipeCard = document.createElement('div');
-        recipeCard.className = 'recipe-card';
-        recipeCard.onclick = () => showRecipeDetails(recipe.id);
+        // Group recipes by category if showing all
+        const categories = ['breakfast', 'lunch', 'dinner', 'snack', 'dessert'];
+        const categoryEmojis = {
+            'breakfast': '🌅',
+            'lunch': '☀️',
+            'dinner': '🌙',
+            'snack': '🍿',
+            'dessert': '🍰'
+        };
         
-        const statusClass = recipe.approved ? 'approved' : 'pending';
-        const statusText = recipe.approved ? '✅ Approved' : '⏸️ Pending';
-        
-        recipeCard.innerHTML = `
-            <h3>${recipe.name}</h3>
-            <div class="recipe-status ${statusClass}">${statusText}</div>
-            ${recipe.sourceURL ? `<p style="font-size: 0.9em; opacity: 0.8;">📌 From: <a href="${recipe.sourceURL}" target="_blank" style="color: #4ecdc4;">${recipe.sourceName || new URL(recipe.sourceURL).hostname}</a></p>` : ''}
-            <p><strong>Ingredients:</strong> ${recipe.ingredients.join(', ')}</p>
-            <p><strong>Prep Time:</strong> ${recipe.prepTime} minutes</p>
-            ${recipe.notes ? `<p><strong>Notes:</strong> ${recipe.notes}</p>` : ''}
-        `;
-        
-            container.appendChild(recipeCard);
-        });
+        if (filter === 'all') {
+            categories.forEach(cat => {
+                const catRecipes = recipesToShow.filter(r => (r.category || 'dinner') === cat);
+                if (catRecipes.length > 0) {
+                    const categoryHeader = document.createElement('h3');
+                    categoryHeader.style.cssText = 'color: #4ecdc4; margin-top: 20px; margin-bottom: 10px;';
+                    categoryHeader.textContent = `${categoryEmojis[cat]} ${cat.charAt(0).toUpperCase() + cat.slice(1)}`;
+                    container.appendChild(categoryHeader);
+                    
+                    catRecipes.forEach(recipe => addRecipeCard(recipe, container));
+                }
+            });
+            
+            // Show uncategorized recipes
+            const uncategorized = recipesToShow.filter(r => !r.category || !categories.includes(r.category));
+            if (uncategorized.length > 0) {
+                const categoryHeader = document.createElement('h3');
+                categoryHeader.style.cssText = 'color: #4ecdc4; margin-top: 20px; margin-bottom: 10px;';
+                categoryHeader.textContent = '📝 Other';
+                container.appendChild(categoryHeader);
+                
+                uncategorized.forEach(recipe => addRecipeCard(recipe, container));
+            }
+        } else {
+            recipesToShow.forEach(recipe => addRecipeCard(recipe, container));
+        }
     }
     
     saveRecipesToStorage();
+}
+
+function addRecipeCard(recipe, container) {
+    const recipeCard = document.createElement('div');
+    recipeCard.className = 'recipe-card';
+    recipeCard.onclick = () => showRecipeDetails(recipe.id);
+    
+    const categoryEmojis = {
+        'breakfast': '🌅',
+        'lunch': '☀️',
+        'dinner': '🌙',
+        'snack': '🍿',
+        'dessert': '🍰'
+    };
+    
+    const categoryEmoji = categoryEmojis[recipe.category] || '📝';
+    const statusClass = recipe.approved ? 'approved' : 'pending';
+    const statusText = recipe.approved ? '✅ Approved' : '⏸️ Pending';
+    
+    recipeCard.innerHTML = `
+        <h3>${categoryEmoji} ${recipe.name}</h3>
+        <div class="recipe-status ${statusClass}">${statusText}</div>
+        ${recipe.sourceURL ? `<p style="font-size: 0.9em; opacity: 0.8;">📌 From: <a href="${recipe.sourceURL}" target="_blank" style="color: #4ecdc4;" onclick="event.stopPropagation();">${recipe.sourceName || new URL(recipe.sourceURL).hostname}</a></p>` : ''}
+        <p><strong>Prep Time:</strong> ${recipe.prepTime} minutes</p>
+        <p style="font-size: 0.9em; opacity: 0.8;"><strong>Ingredients:</strong> ${recipe.ingredients.slice(0, 3).join(', ')}${recipe.ingredients.length > 3 ? '...' : ''}</p>
+        ${recipe.notes ? `<p style="font-size: 0.9em; opacity: 0.8;"><strong>Notes:</strong> ${recipe.notes}</p>` : ''}
+    `;
+    
+    container.appendChild(recipeCard);
+}
+
+function filterRecipesByCategory(category) {
+    currentCategoryFilter = category;
+    
+    // Update button states
+    document.querySelectorAll('#recipes .nav-button').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    if (event && event.target) {
+        event.target.classList.add('active');
+    }
+    
+    updateRecipeDisplay(category);
 }
 
 // Meal Planning Functions
@@ -249,17 +327,58 @@ function startCooking() {
 }
 
 function updateMealSuggestions() {
-    // Filter recipes based on available ingredients
-    const availableRecipes = approvedRecipes.filter(recipe => {
-        return recipe.approved && recipe.ingredients.every(ingredient => 
-            pantryInventory.some(item => 
-                item.toLowerCase().includes(ingredient.toLowerCase()) ||
-                ingredient.toLowerCase().includes(item.toLowerCase())
-            )
-        );
-    });
+    const mealOptionsDiv = document.getElementById('meal-options');
+    if (!mealOptionsDiv) return;
     
-    console.log('Available recipes based on pantry:', availableRecipes.length);
+    // Filter recipes based on available ingredients (if pantry has items)
+    let suggestedRecipes = [];
+    
+    if (pantryInventory.length > 0) {
+        // Show recipes we can make with current pantry
+        suggestedRecipes = approvedRecipes.filter(recipe => {
+            if (!recipe.approved) return false;
+            
+            // Check if we have at least some of the ingredients
+            const matchingIngredients = recipe.ingredients.filter(ingredient => 
+                pantryInventory.some(item => {
+                    const itemLower = item.toLowerCase();
+                    const ingLower = ingredient.toLowerCase();
+                    return itemLower.includes(ingLower) || ingLower.includes(itemLower);
+                })
+            );
+            
+            // Show if we have at least 50% of ingredients
+            return matchingIngredients.length >= recipe.ingredients.length * 0.5;
+        });
+    } else {
+        // No pantry items - show all approved recipes
+        suggestedRecipes = approvedRecipes.filter(r => r.approved);
+    }
+    
+    // Update the meal options display
+    if (suggestedRecipes.length === 0) {
+        if (approvedRecipes.length === 0) {
+            mealOptionsDiv.innerHTML = '<p style="opacity: 0.7; text-align: center;">Add some recipes first to see meal suggestions!</p>';
+        } else if (pantryInventory.length === 0) {
+            mealOptionsDiv.innerHTML = '<p style="opacity: 0.7; text-align: center;">Add pantry items to see meal suggestions!</p>';
+        } else {
+            mealOptionsDiv.innerHTML = '<p style="opacity: 0.7; text-align: center;">No recipes match your current pantry. Time to shop!</p>';
+        }
+    } else {
+        mealOptionsDiv.innerHTML = '';
+        suggestedRecipes.forEach(recipe => {
+            const option = document.createElement('div');
+            option.className = 'meal-option';
+            option.onclick = () => selectMeal(recipe.id);
+            option.innerHTML = `
+                <h4>${recipe.name}</h4>
+                <p style="font-size: 0.9em; opacity: 0.8;">⏱️ ${recipe.prepTime} min</p>
+            `;
+            mealOptionsDiv.appendChild(option);
+        });
+    }
+    
+    console.log('Available recipes based on pantry:', suggestedRecipes.length);
 }
 
 // Shopping List Functions
@@ -478,6 +597,7 @@ async function importRecipeFromURL() {
         const newRecipe = {
             id: recipeData.title.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now(),
             name: recipeData.title,
+            category: 'dinner', // Default to dinner for imported recipes
             ingredients: recipeData.ingredients.length > 0 ? recipeData.ingredients : ['See original recipe for ingredients'],
             prepTime: recipeData.prepTime || 30,
             approved: true,
@@ -509,6 +629,7 @@ async function importRecipeFromURL() {
         const newRecipe = {
             id: recipeName.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now(),
             name: recipeName,
+            category: 'dinner', // Default to dinner
             ingredients: ['See original recipe for ingredients'],
             prepTime: 30,
             approved: true,
@@ -628,6 +749,15 @@ function editRecipe(recipeId) {
         <label style="display: block; margin-bottom: 5px;">Recipe Name:</label>
         <input type="text" id="edit-name" value="${recipe.name}" style="width: 100%; padding: 8px; margin-bottom: 15px; background: rgba(255,255,255,0.1); border: 1px solid #4ecdc4; color: white; border-radius: 5px;">
         
+        <label style="display: block; margin-bottom: 5px;">Category:</label>
+        <select id="edit-category" style="width: 100%; padding: 8px; margin-bottom: 15px; background: rgba(255,255,255,0.1); border: 1px solid #4ecdc4; color: white; border-radius: 5px;">
+            <option value="breakfast" ${recipe.category === 'breakfast' ? 'selected' : ''}>🌅 Breakfast</option>
+            <option value="lunch" ${recipe.category === 'lunch' ? 'selected' : ''}>☀️ Lunch</option>
+            <option value="dinner" ${recipe.category === 'dinner' || !recipe.category ? 'selected' : ''}>🌙 Dinner</option>
+            <option value="snack" ${recipe.category === 'snack' ? 'selected' : ''}>🍿 Snack</option>
+            <option value="dessert" ${recipe.category === 'dessert' ? 'selected' : ''}>🍰 Dessert</option>
+        </select>
+        
         <label style="display: block; margin-bottom: 5px;">Ingredients (one per line):</label>
         <textarea id="edit-ingredients" style="width: 100%; height: 150px; padding: 8px; margin-bottom: 15px; background: rgba(255,255,255,0.1); border: 1px solid #4ecdc4; color: white; border-radius: 5px; font-family: inherit;">${recipe.ingredients.join('\n')}</textarea>
         
@@ -673,6 +803,7 @@ function saveRecipeEdits(recipeId) {
     if (!recipe) return;
     
     recipe.name = document.getElementById('edit-name').value;
+    recipe.category = document.getElementById('edit-category').value || 'dinner';
     
     // Clean and save ingredients
     const ingredientsText = document.getElementById('edit-ingredients').value;
@@ -748,16 +879,17 @@ function loadPantryFromStorage() {
 
 // Initialize the app
 document.addEventListener('DOMContentLoaded', function() {
-    // Clear old data to start fresh
-    localStorage.removeItem('fortKitchenRecipes');
-    localStorage.removeItem('fortKitchenPantry');
-    
+    // Load saved data
     loadPantryFromStorage();
     loadRecipesFromStorage();
     updateInventoryDisplay();
     updateRecipeDisplay();
     updateMealSuggestions();
-    showSuccessMessage('🏰 Fort Kitchen Command ready - Add your favorite recipes!');
+    
+    // Show welcome message only if no recipes exist
+    if (approvedRecipes.length === 0) {
+        showSuccessMessage('🏰 Fort Kitchen Command ready - Add your favorite recipes!');
+    }
 });
 
 // Quick add function for pasting recipe text
@@ -794,6 +926,7 @@ function quickAddRecipe() {
     const newRecipe = {
         id: recipeName.toLowerCase().replace(/\\s+/g, '-') + '-' + Date.now(),
         name: recipeName,
+        category: 'dinner', // Default to dinner
         ingredients: finalIngredients.length > 0 ? finalIngredients : ['See recipe text for ingredients'],
         prepTime: 30,
         approved: true,
