@@ -61,7 +61,63 @@ function removeInventoryItem(item) {
 }
 
 function manualAddInventory() {
-    const items = prompt('Add items to pantry (one per line or comma-separated):');
+    // Create a proper modal with textarea
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+        border: 2px solid #4ecdc4;
+        border-radius: 20px;
+        padding: 30px;
+        max-width: 500px;
+        width: 90%;
+        z-index: 3000;
+        color: white;
+    `;
+    
+    modal.innerHTML = `
+        <h3 style="color: #4ecdc4; margin-bottom: 20px;">Add Pantry Items</h3>
+        <p style="margin-bottom: 15px; opacity: 0.8;">Enter items one per line or comma-separated:</p>
+        <textarea id="pantry-items-input" style="width: 100%; height: 200px; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid #4ecdc4; color: white; border-radius: 5px; font-family: inherit; resize: vertical;" placeholder="onions
+garlic
+rice
+black beans
+olive oil
+salt, pepper, cumin"></textarea>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button onclick="savePantryItems()" class="btn">Add Items</button>
+            <button onclick="closePantryModal()" class="btn btn-secondary">Cancel</button>
+        </div>
+    `;
+    
+    // Add backdrop
+    const backdrop = document.createElement('div');
+    backdrop.id = 'pantry-backdrop';
+    backdrop.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 2999;
+    `;
+    backdrop.onclick = closePantryModal;
+    
+    document.body.appendChild(backdrop);
+    document.body.appendChild(modal);
+    
+    // Focus the textarea
+    setTimeout(() => document.getElementById('pantry-items-input').focus(), 100);
+}
+
+function savePantryItems() {
+    const textarea = document.getElementById('pantry-items-input');
+    const items = textarea.value;
+    
     if (items && items.trim()) {
         // Clean and split the items
         const itemList = items.split(/[,\n]+/)
@@ -76,6 +132,13 @@ function manualAddInventory() {
         const count = itemList.length;
         showSuccessMessage(`Added ${count} item${count > 1 ? 's' : ''} to pantry!`);
     }
+    
+    closePantryModal();
+}
+
+function closePantryModal() {
+    document.querySelector('div[style*="z-index: 3000"]')?.remove();
+    document.getElementById('pantry-backdrop')?.remove();
 }
 
 // Recipe Management Functions
