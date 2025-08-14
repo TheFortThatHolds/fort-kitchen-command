@@ -38,7 +38,7 @@ function updateInventoryDisplay() {
     inventoryContainer.innerHTML = '';
     
     if (pantryInventory.length === 0) {
-        inventoryContainer.innerHTML = '<p style="opacity: 0.7; text-align: center; grid-column: 1/-1;">No items in pantry yet. Upload photos or add items manually!</p>';
+        inventoryContainer.innerHTML = '<p style="opacity: 0.7; text-align: center; grid-column: 1/-1;">No items in pantry yet. Click "Add Item Manually" to get started!</p>';
     } else {
         pantryInventory.forEach(item => {
             const itemDiv = document.createElement('div');
